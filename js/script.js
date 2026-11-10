@@ -1,81 +1,95 @@
-$(function () {
-  initRegistration();
-  initMenuFilter();
-  initGallery();
-  initReservationCrud();
-});
+function initReservationCrud() {
+  const $body = $('#res-body');
+  if (!$body.length) return;
 
-function initRegistration() {
-  const $form = $('#register-form');
-  if (!$form.length) return;
+  const KEY = 'oe_reservations';
+  const SEED = [
+    { id: 1, name: 'Aigerim S.', date: '2026-11-20', time: '18:00', guests: 2 },
+    { id: 2, name: 'Daniyar K.', date: '2026-11-22', time: '20:00', guests: 4 }
+  ];
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-  function strength(pw) {
-    if (!pw) return { width: 0, cls: '', text: '' };
-    const score = [
-      pw.length >= 8,
-      /[a-z]/.test(pw) && /[A-Z]/.test(pw),
-      /\d/.test(pw),
-      /[^A-Za-z0-9]/.test(pw)
-    ].filter(Boolean).length;
-    if (score <= 1) return { width: 33, cls: 'bg-danger', text: 'Weak' };
-    if (score <= 3) return { width: 66, cls: 'bg-warning', text: 'Medium' };
-    return { width: 100, cls: 'bg-success', text: 'Strong' };
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || SEED.slice(); }
+    catch (e) { return SEED.slice(); }
   }
-
-  function updateStrength(pw) {
-    const s = strength(pw);
-    $('#strength-bar')
-      .removeClass('bg-danger bg-warning bg-success')
-      .addClass(s.cls)
-      .css('width', s.width + '%');
-    $('#strength-text').text(s.text ? 'Password strength: ' + s.text : '');
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* ignore */ }
   }
+  const esc = s => $('<div>').text(s).html();
 
-  const rules = {
-    'reg-name': v => v.trim().length >= 2 ? '' : 'Name is required (at least 2 characters).',
-    'reg-email': v => !v.trim() ? 'Email is required.'
-      : EMAIL_RE.test(v.trim()) ? '' : 'Enter a valid email, e.g. name@example.com.',
-    'reg-password': v => !v ? 'Password is required.'
-      : v.length < 8 ? 'Use at least 8 characters.'
-      : strength(v).text === 'Weak' ? 'Too weak. Add uppercase letters, numbers or symbols.' : '',
-    'reg-confirm': v => !v ? 'Please confirm your password.'
-      : v !== $('#reg-password').val() ? 'Passwords do not match.' : ''
-  };
+  let items = load();
+  const modal = new bootstrap.Modal('#res-modal');
+  const $form = $('#res-form');
+  $('#res-date').attr('min', new Date().toISOString().slice(0, 10));
 
-  function check($input) {
-    const msg = rules[$input.attr('id')]($input.val());
-    $input.toggleClass('is-invalid', !!msg).toggleClass('is-valid', !msg);
-    $input.siblings('.invalid-feedback').text(msg);
-    return !msg;
-  }
-
-  $form.on('input focusout', '.form-control', function () {
-    check($(this));
-    if (this.id === 'reg-password') {
-      updateStrength($(this).val());
-      if ($('#reg-confirm').val()) check($('#reg-confirm'));
+  function render() {
+    if (!items.length) {
+      $body.html('<tr><td colspan="5" class="text-center">No reservations yet.</td></tr>');
+      return;
     }
+    $body.html(items.map(r => `
+      <tr data-id="${r.id}">
+        <td>${esc(r.name)}</td>
+        <td>${esc(r.date)}</td>
+        <td>${esc(r.time)}</td>
+        <td>${Number(r.guests)}</td>
+        <td class="text-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary edit-btn">Edit</button>
+          <button type="button" class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
+        </td>
+      </tr>`).join(''));
+  }
+
+  $('#add-res-btn').on('click', function () {
+    $form[0].reset();
+    $form.removeClass('was-validated');
+    $('#res-id').val('');
+    $('#res-modal-title').text('Add reservation');
+    modal.show();
+  });
+
+  $body.on('click', '.edit-btn', function () {
+    const id = Number($(this).closest('tr').data('id'));
+    const r = items.find(x => x.id === id);
+    $form.removeClass('was-validated');
+    $('#res-id').val(r.id);
+    $('#res-name').val(r.name);
+    $('#res-date').val(r.date);
+    $('#res-time').val(r.time);
+    $('#res-guests').val(r.guests);
+    $('#res-modal-title').text('Edit reservation');
+    modal.show();
   });
 
   $form.on('submit', function (e) {
     e.preventDefault();
-    let ok = true, $first = null;
-    $form.find('.form-control').each(function () {
-      if (!check($(this))) { ok = false; $first = $first || $(this); }
-    });
-    const $alert = $('#form-alert');
-    if (!ok) {
-      $alert.removeClass('d-none alert-success').addClass('alert-danger')
-        .text('Please fix the highlighted fields.');
-      $first.trigger('focus');
-      return;
+    if (!this.checkValidity()) { $form.addClass('was-validated'); return; }
+    const id = $('#res-id').val();
+    const data = {
+      name: $('#res-name').val().trim(),
+      date: $('#res-date').val(),
+      time: $('#res-time').val(),
+      guests: Number($('#res-guests').val())
+    };
+    if (id) {
+      Object.assign(items.find(x => x.id === Number(id)), data);
+    } else {
+      const nextId = items.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+      items.push({ id: nextId, ...data });
     }
-    $alert.removeClass('d-none alert-danger').addClass('alert-success')
-      .text('Registration successful.');
-    $form[0].reset();
-    $form.find('.form-control').removeClass('is-valid is-invalid');
-    updateStrength('');
+    save(); render(); modal.hide();
   });
+
+  $body.on('click', '.delete-btn', function () {
+    const $row = $(this).closest('tr');
+    const id = Number($row.data('id'));
+    const r = items.find(x => x.id === id);
+    if (!confirm('Delete the reservation for "' + r.name + '"?')) return;
+    $row.fadeOut(200, function () {
+      items = items.filter(x => x.id !== id);
+      save(); render();
+    });
+  });
+
+  render();
 }
