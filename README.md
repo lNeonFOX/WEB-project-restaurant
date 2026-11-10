@@ -43,4 +43,4 @@ The forms are demonstrations and do not submit real requests.
 | Abay Amirkhan | Developed Delivery and Booking. Implemented CSS and media queries for both pages. |
 
 ## Published Website
-https://lneonfox.github.io/WEB-midterm-restaurant/
+https://lneonfox.github.io/WEB-project-restaurant/
