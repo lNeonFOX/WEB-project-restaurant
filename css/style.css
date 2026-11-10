@@ -821,3 +821,132 @@ font-size: 0.85rem;
         grid-template-columns: 1fr;
     }
 }
+
+/* Endterm Additions: Filters & Lightbox */
+
+.filter-btn{
+    background: var(--color-white);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.filter-btn:hover{
+    border-color: var(--color-ink);
+}
+
+.filter-btn.active{
+    background: var(--color-ink);
+    color: var(--color-white);
+    border-color: var(--color-ink);
+}
+
+.gallery-item{
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-line);
+    aspect-ratio: 4 / 3;
+    background: #eae9df;
+}
+
+.gallery-item img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.gallery-item:hover img{
+    transform: scale(1.06);
+}
+
+#lightbox{
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 28, 22, 0.92);
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+.lb-stage{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 30px;
+}
+
+.lb-stage figure{
+    margin: 0;
+    text-align: center;
+    max-width: 90vw;
+    max-height: 85vh;
+}
+
+.lb-img{
+    max-width: 100%;
+    max-height: 75vh;
+    border-radius: 8px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+.lb-caption{
+    color: var(--color-cream);
+    margin-top: 14px;
+    font-size: 0.95rem;
+    font-family: var(--font-heading);
+    letter-spacing: 0.04em;
+}
+
+.lb-btn{
+    position: absolute;
+    background: transparent;
+    border: none;
+    color: var(--color-cream);
+    font-size: 2.4rem;
+    cursor: pointer;
+    padding: 12px 18px;
+    z-index: 2010;
+    transition: transform 0.2s ease, color 0.2s ease;
+    line-height: 1;
+}
+
+.lb-btn:hover{
+    color: var(--color-accent);
+    transform: scale(1.15);
+}
+
+.lb-close{
+    top: 18px;
+    right: 24px;
+    font-size: 2.8rem;
+}
+
+.lb-prev{
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.lb-next{
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@media (max-width: 575px){
+    .lb-btn {
+        font-size: 1.8rem;
+        padding: 8px;
+    }
+    .lb-prev {left: 8px;}
+    .lb-next {right: 8px;}
+}
