@@ -35,8 +35,23 @@
         </section>
         <section class="container section-space pt-0" aria-labelledby="signature-title">
             <h2 id="signature-title" class="mb-4">Signature dishes</h2>
-            <div class="dish-grid">
-                <a href="delivery.html" class="dish-card">
+
+            <div class="row g-3 align-items-center justify-content-between mb-4">
+                <div class="col-12 col-md-5">
+                    <input type="text" id="menu-search" class="form-control" placeholder="Search dishes (e.g. pasta, salad)...">
+                </div>
+                <div class="col-12 col-md-auto d-flex flex-wrap gap-2">
+                    <button type="button" class="filter-btn active" data-category="all" aria-pressed="true">All Dishes</button>
+                    <button type="button" class="filter-btn" data-category="starter" aria-pressed="false">Starters</button>
+                    <button type="button" class="filter-btn" data-category="main" aria-pressed="false">Main Courses</button>
+                </div>
+            </div>
+            <div id="no-results" class="alert alert-warning text-center d-none" role="alert">
+                No dishes found matching your search.
+            </div>
+
+            <div class="dish-grid" id="dish-grid">
+                <a href="delivery.html" class="dish-card" data-category="main">
                     <img src="images/Roasted-Cherry-Tomato-Sauce-2-copy.jpg" alt="Illustration of roasted tomato pasta" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Main course</p>
@@ -45,7 +60,7 @@
                         <div class="dish-bottom"><span class="price">3,900 KZT</span><span class="order-link">Order dish <span aria-hidden="true">↗</span></span></div>
                     </div>
                 </a>
-                <a href="delivery.html" class="dish-card">
+                <a href="delivery.html" class="dish-card" data-category="starter">
                     <img src="images/fresh-garden-salad-stockcake.jpg" alt="Illustration of garden bowl" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Starter</p>
@@ -54,7 +69,7 @@
                         <div class="dish-bottom"><span class="price">2,800 KZT</span><span class="order-link">Order dish <span aria-hidden="true">↗</span></span></div>
                     </div>
                 </a>
-                <a href="delivery.html" class="dish-card">
+                <a href="delivery.html" class="dish-card" data-category="main">
                     <img src="images/Prosciutto-and-Mozzarella-Pizza-1368x2000.jpg" alt="Illustration of basil & mozzarella pizza" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Main course</p>
@@ -63,7 +78,7 @@
                         <div class="dish-bottom"><span class="price">4,500 KZT</span><span class="order-link">Order dish <span aria-hidden="true">↗</span></span></div>
                     </div>
                 </a>
-                <a href="delivery.html" class="dish-card">
+                <a href="delivery.html" class="dish-card" data-category="main">
                     <img src="images/image.png" alt="Illustration of onion frenzy" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Main course</p>
@@ -72,7 +87,7 @@
                         <div class="dish-bottom"><span class="price">5,600 KZT</span><span class="order-link">Order dish <span aria-hidden="true">↗</span></span></div>
                     </div>
                 </a>
-                <a href="delivery.html" class="dish-card">
+                <a href="delivery.html" class="dish-card" data-category="main">
                     <img src="images/images.jpg" alt="Illustration of pasta bolognese" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Main course</p>
@@ -81,7 +96,7 @@
                         <div class="dish-bottom"><span class="price">4,600 KZT</span><span class="order-link">Order dish <span aria-hidden="true">↗</span></span></div>
                     </div>
                 </a>
-                <a href="delivery.html" class="dish-card">
+                <a href="delivery.html" class="dish-card" data-category="starter">
                     <img src="images/Caesar-Salad-9.jpg" alt="Illustration of caesar salad" width="480" height="400" loading="lazy">
                     <div class="dish-content">
                         <p class="eyebrow">Starter</p>
@@ -114,6 +129,46 @@
             <a class="btn btn-brand mt-3" href="delivery.html">Build a delivery order ↗</a>
         </section>
 
+        <section class="container section-space pt-0">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">PHOTO GALLERY</p>
+                    <h2>A look at our dishes</h2>
+                </div>
+            </div>
+            <div class="row g-3" id="gallery">
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/Roasted-Cherry-Tomato-Sauce-2-copy.jpg">
+                        <img src="images/Roasted-Cherry-Tomato-Sauce-2-copy.jpg" alt="Roasted tomato pasta" loading="lazy">
+                    </a>
+                </div>
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/fresh-garden-salad-stockcake.jpg">
+                        <img src="images/fresh-garden-salad-stockcake.jpg" alt="Garden bowl" loading="lazy">
+                    </a>
+                </div>
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/Prosciutto-and-Mozzarella-Pizza-1368x2000.jpg">
+                        <img src="images/Prosciutto-and-Mozzarella-Pizza-1368x2000.jpg" alt="Basil and mozzarella pizza" loading="lazy">
+                    </a>
+                </div>
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/image.png">
+                        <img src="images/image.png" alt="Onion frenzy" loading="lazy">
+                    </a>
+                </div>
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/images.jpg">
+                        <img src="images/images.jpg" alt="Pasta Bolognese" loading="lazy">
+                    </a>
+                </div>
+                <div class="col-6 col-md-4">
+                    <a class="gallery-item" href="images/Caesar-Salad-9.jpg">
+                        <img src="images/Caesar-Salad-9.jpg" alt="Caesar salad" loading="lazy">
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
     <footer class="site-footer">
