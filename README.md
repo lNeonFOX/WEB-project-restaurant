@@ -46,7 +46,7 @@ The endterm project extends the midterm website with JavaScript and jQuery. All 
 - Bootstrap 5 (CSS and JS)
 - JavaScript (ES6)
 - jQuery 3.7
-- GitHub Pages [or Netlify]
+- GitHub Pages
 
 ## Individual Contributions
 
