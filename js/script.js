@@ -1,101 +1,94 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const mainBookingForm = document.getElementById("booking-form");
-    if (mainBookingForm) {
-        const submitBtn = mainBookingForm.querySelector("button[type='submit']");
+    function showFeedback(input, isValid, message = "") {
+        input.classList.toggle("is-valid", isValid);
+        input.classList.toggle("is-invalid", !isValid);
+        let feedback = input.parentElement.querySelector(".invalid-feedback");
+        if (!feedback) {
+            feedback = document.createElement("div");
+            feedback.className = "invalid-feedback text-danger small mt-1";
+            input.parentElement.appendChild(feedback);
+        }
+        feedback.textContent = isValid ? "" : message;
+        return isValid;
+    }
+
+    function attachValidation(input, validateFn) {
+        if (!input) return;
+        const handler = () => validateFn(input);
+        input.addEventListener("input", handler);
+        input.addEventListener("blur", handler);
+    }
+
+    const rules = {
+        name: (input) => showFeedback(input, input.value.trim().length >= 2, "Enter at least 2 characters."),
+        email: (input) => showFeedback(input, /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim()), "Enter a valid email address."),
+        phone: (input) => showFeedback(input, /^[+0-9() .\-]{7,25}$/.test(input.value.trim()), "Enter a valid phone number (7–25 chars)."),
+        address: (input) => showFeedback(input, input.value.trim().length >= 5, "Enter at least 5 characters."),
+        required: (input, msg) => showFeedback(input, Boolean(input.value), msg)
+    };
+
+    const bookingForm = document.getElementById("booking-form");
+    if (bookingForm) {
+        const submitBtn = bookingForm.querySelector("button[type='submit']");
         if (submitBtn) {
             submitBtn.removeAttribute("disabled");
             submitBtn.textContent = "Reserve Table";
         }
 
-        mainBookingForm.addEventListener("submit", (e) => {
+        const bName = document.getElementById("booking-name");
+        const bEmail = document.getElementById("booking-email");
+        const bDate = document.getElementById("booking-date");
+        const bTime = document.getElementById("booking-time");
+        const bGuests = document.getElementById("booking-guests");
+
+        attachValidation(bName, rules.name);
+        attachValidation(bEmail, rules.email);
+        attachValidation(bDate, (el) => rules.required(el, "Select a date."));
+        attachValidation(bTime, (el) => rules.required(el, "Select a time."));
+        attachValidation(bGuests, (el) => rules.required(el, "Select party size."));
+
+        bookingForm.addEventListener("submit", (e) => {
             e.preventDefault();
+            const valid = rules.name(bName) & rules.email(bEmail) & rules.required(bDate, "Select a date.") &
+                          rules.required(bTime, "Select a time.") & rules.required(bGuests, "Select party size.");
 
-            const name = document.getElementById("booking-name").value.trim();
-            const email = document.getElementById("booking-email").value.trim();
-            const date = document.getElementById("booking-date").value;
-            const time = document.getElementById("booking-time").value;
-            const guests = document.getElementById("booking-guests").value;
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (name.length < 2) {
-                alert("Please enter a valid full name (at least 2 characters).");
-                document.getElementById("booking-name").focus();
-                return;
-            }
-            if (!emailRegex.test(email)) {
-                alert("Please enter a valid email address.");
-                document.getElementById("booking-email").focus();
-                return;
-            }
-            if (!date) {
-                alert("Please select a reservation date.");
-                document.getElementById("booking-date").focus();
-                return;
-            }
-            if (!time) {
-                alert("Please choose a time slot.");
-                document.getElementById("booking-time").focus();
-                return;
-            }
-            if (!guests) {
-                alert("Please choose your party size.");
-                document.getElementById("booking-guests").focus();
-                return;
-            }
+            if (!valid) return alert("Please correct the highlighted errors.");
 
             let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
             reservations.push({
                 id: Date.now(),
-                name: name,
-                date: date,
-                time: time,
-                guests: guests + " guests"
+                name: bName.value.trim(),
+                date: bDate.value,
+                time: bTime.value,
+                guests: bGuests.value + " guests"
             });
             localStorage.setItem("olive_reservations", JSON.stringify(reservations));
 
             alert("Table reserved successfully!");
-            mainBookingForm.reset();
+            bookingForm.reset();
+            [bName, bEmail, bDate, bTime, bGuests].forEach(el => el.classList.remove("is-valid", "is-invalid"));
             renderReservationsTable();
         });
     }
-
-    renderReservationsTable();
 
     const resForm = document.getElementById("res-form");
     if (resForm) {
         resForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            
             const idInput = document.getElementById("res-id").value;
             const name = document.getElementById("res-name").value.trim();
             const date = document.getElementById("res-date").value;
             const time = document.getElementById("res-time").value;
             const guests = document.getElementById("res-guests").value;
 
-            if (!name || !date || !time || !guests) {
-                resForm.classList.add("was-validated");
-                return;
-            }
+            if (!name || !date || !time || !guests) return resForm.classList.add("was-validated");
 
             let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
-
             if (idInput) {
                 let item = reservations.find(r => r.id == idInput);
-                if (item) {
-                    item.name = name;
-                    item.date = date;
-                    item.time = time;
-                    item.guests = guests + " guests";
-                }
+                if (item) Object.assign(item, { name, date, time, guests: guests + " guests" });
             } else {
-                reservations.push({
-                    id: Date.now(),
-                    name: name,
-                    date: date,
-                    time: time,
-                    guests: guests + " guests"
-                });
+                reservations.push({ id: Date.now(), name, date, time, guests: guests + " guests" });
             }
 
             localStorage.setItem("olive_reservations", JSON.stringify(reservations));
@@ -103,14 +96,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const modalEl = document.getElementById("res-modal");
             if (modalEl && window.bootstrap) {
-                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-                modalInstance.hide();
+                (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).hide();
             }
             resForm.reset();
             document.getElementById("res-id").value = "";
             resForm.classList.remove("was-validated");
         });
     }
+
+    const deliveryForm = document.getElementById("delivery-form");
+    if (deliveryForm) {
+        const submitBtn = deliveryForm.querySelector("button[type='submit']");
+        if (submitBtn) {
+            submitBtn.removeAttribute("disabled");
+            submitBtn.textContent = "Place Order";
+        }
+
+        const dName = document.getElementById("delivery-name");
+        const dPhone = document.getElementById("delivery-phone");
+        const dAddress = document.getElementById("delivery-address");
+
+        attachValidation(dName, rules.name);
+        attachValidation(dPhone, rules.phone);
+        attachValidation(dAddress, rules.address);
+
+        deliveryForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const totalItems = Array.from(deliveryForm.querySelectorAll(".quantity-input"))
+                                   .reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+
+            if (totalItems <= 0) return alert("Please select at least one dish quantity.");
+
+            const valid = rules.name(dName) & rules.phone(dPhone) & rules.address(dAddress);
+            if (!valid) return alert("Please correct the highlighted errors.");
+
+            alert(`Success! Your delivery order has been placed. Total items: ${totalItems}`);
+            deliveryForm.reset();
+            [dName, dPhone, dAddress].forEach(el => el.classList.remove("is-valid", "is-invalid"));
+        });
+    }
+
+    renderReservationsTable();
 });
 
 function renderReservationsTable() {
@@ -121,20 +147,18 @@ function renderReservationsTable() {
         { id: 1, name: "Aigerim Kasymova", date: "2026-06-10", time: "18:00", guests: "2 guests" },
         { id: 2, name: "Timur Bekmambetov", date: "2026-06-12", time: "20:00", guests: "4 guests" }
     ];
-    
+
     if (!localStorage.getItem("olive_reservations")) {
         localStorage.setItem("olive_reservations", JSON.stringify(reservations));
     }
 
-    tableBody.innerHTML = "";
     if (reservations.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No active reservations found.</td></tr>`;
         return;
     }
 
-    reservations.forEach((res) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+    tableBody.innerHTML = reservations.map(res => `
+        <tr>
             <td>${escapeHtml(res.name)}</td>
             <td>${escapeHtml(res.date)}</td>
             <td>${escapeHtml(res.time)}</td>
@@ -142,63 +166,9 @@ function renderReservationsTable() {
             <td class="text-end">
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteReservation(${res.id})">Delete</button>
             </td>
-        `;
-        tableBody.appendChild(tr);
-    });
+        </tr>
+    `).join("");
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    const deliveryForm = document.getElementById("delivery-form");
-
-    if (deliveryForm) {
-        const submitBtn = deliveryForm.querySelector("button[type='submit']");
-        if (submitBtn) {
-            submitBtn.removeAttribute("disabled");
-            submitBtn.textContent = "Place Order";
-        }
-
-        deliveryForm.addEventListener("submit", (e) => {
-            e.preventDefault();
-
-            const nameInput = document.getElementById("delivery-name");
-            const phoneInput = document.getElementById("delivery-phone");
-            const addressInput = document.getElementById("delivery-address");
-            const phoneRegex = /^[+0-9() .\-]{7,25}$/;
-
-            const quantityInputs = deliveryForm.querySelectorAll(".quantity-input");
-            let totalItems = 0;
-            quantityInputs.forEach(input => {
-                totalItems += parseInt(input.value) || 0;
-            });
-
-            if (totalItems <= 0) {
-                alert("Please select at least one dish quantity before placing an order.");
-                return;
-            }
-
-            if (!nameInput || nameInput.value.trim().length < 2) {
-                alert("Please enter a valid full name (at least 2 characters).");
-                nameInput.focus();
-                return;
-            }
-
-            if (!phoneInput || !phoneRegex.test(phoneInput.value.trim())) {
-                alert("Please enter a valid phone number (7–25 characters using digits, spaces, +, parentheses, periods, or hyphens).");
-                phoneInput.focus();
-                return;
-            }
-
-            if (!addressInput || addressInput.value.trim().length < 5) {
-                alert("Please enter a valid delivery address (at least 5 characters).");
-                addressInput.focus();
-                return;
-            }
-
-            alert("Success! Your delivery order has been placed. Total items ordered: " + totalItems);
-            deliveryForm.reset();
-        });
-    }
-});
 
 function deleteReservation(id) {
     if (confirm("Are you sure you want to cancel this reservation?")) {
@@ -210,13 +180,19 @@ function deleteReservation(id) {
 }
 
 function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
 }
+
+function deleteReservation(id) {
+    if (confirm("Are you sure you want to cancel this reservation?")) {
+        let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
+        reservations = reservations.filter(r => r.id !== id);
+        localStorage.setItem("olive_reservations", JSON.stringify(reservations));
+        renderReservationsTable();
+    }
+}
+
+
 
 
 // 2.1 Form Validation (register.html)
