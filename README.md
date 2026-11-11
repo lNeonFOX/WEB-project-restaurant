@@ -54,7 +54,7 @@ The endterm project extends the midterm website with JavaScript and jQuery. All 
 | --- | --- |
 | Torekhan Taimas | Midterm: developed Home and contributed to About. Implemented CSS, Bootstrap, and media queries for his pages, plus media queries for Menu. Prepared the README, project architecture, and deployment. Endterm: Tasks for each member provided, created the Register page and its JavaScript (registration module): required-field checks, RegEx email validation, password strength indicator, password confirmation, real-time feedback, and submission blocking. README description updated. |
 | Bikanov Aibar | Developed Menu and prepared all images. Implemented CSS and Bootstrap for his page and contributed to About. |
-| Abay Amirkhan | Developed Delivery and Booking. Implemented CSS and media queries for both pages. |
+| Abay Amirkhan | Developed Delivery and Booking. Implemented CSS and media queries for both pages.Updated form validation logic with RegEx phone and address checks, dynamic quantity verification, and order submission handling for the Delivery page. Updated table reservation logic in the Booking page with form validation, dynamic data persistence using localStorage, and interactive CRUD management. |
 
 ## Published Website
 https://lneonfox.github.io/WEB-project-restaurant/
