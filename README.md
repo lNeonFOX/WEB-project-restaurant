@@ -53,7 +53,7 @@ The endterm project extends the midterm website with JavaScript and jQuery. All 
 | Member | Contribution |
 | --- | --- |
 | Torekhan Taimas | Midterm: developed Home and contributed to About. Implemented CSS, Bootstrap, and media queries for his pages, plus media queries for Menu. Prepared the README, project architecture, and deployment. Endterm: Tasks for each member provided, created the Register page and its JavaScript (registration module): required-field checks, RegEx email validation, password strength indicator, password confirmation, real-time feedback, and submission blocking. README description updated. |
-| Bikanov Aibar | Developed Menu and prepared all images. Implemented CSS and Bootstrap for his page and contributed to About. |
+| Bikanov Aibar | Midterm: Developed Menu and prepared all images. Implemented CSS and Bootstrap for his page and contributed to About. Endterm: Developed the real-time search and multi-category filtering system for the Menu page. Built the responsive image gallery and custom lightbox viewer with smooth visual transitions, image navigation, and gallery visibility toggling. Prepared and optimized all food imagery and styled new interactive elements. |
 | Abay Amirkhan | Developed Delivery and Booking. Implemented CSS and media queries for both pages.Updated form validation logic with RegEx phone and address checks, dynamic quantity verification, and order submission handling for the Delivery page. Updated table reservation logic in the Booking page with form validation, dynamic data persistence using localStorage, and interactive CRUD management. |
 
 ## Published Website
