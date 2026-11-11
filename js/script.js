@@ -1,97 +1,221 @@
-function initReservationCrud() {
-  const $body = $('#res-body');
-  if (!$body.length) return;
+document.addEventListener("DOMContentLoaded", () => {
+    const mainBookingForm = document.getElementById("booking-form");
+    if (mainBookingForm) {
+        const submitBtn = mainBookingForm.querySelector("button[type='submit']");
+        if (submitBtn) {
+            submitBtn.removeAttribute("disabled");
+            submitBtn.textContent = "Reserve Table";
+        }
 
-  const KEY = 'oe_reservations';
-  const SEED = [
-    { id: 1, name: 'Aigerim S.', date: '2026-11-20', time: '18:00', guests: 2 },
-    { id: 2, name: 'Daniyar K.', date: '2026-11-22', time: '20:00', guests: 4 }
-  ];
+        mainBookingForm.addEventListener("submit", (e) => {
+            e.preventDefault();
 
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || SEED.slice(); }
-    catch (e) { return SEED.slice(); }
-  }
-  function save() {
-    try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* ignore */ }
-  }
-  const esc = s => $('<div>').text(s).html();
+            const name = document.getElementById("booking-name").value.trim();
+            const email = document.getElementById("booking-email").value.trim();
+            const date = document.getElementById("booking-date").value;
+            const time = document.getElementById("booking-time").value;
+            const guests = document.getElementById("booking-guests").value;
 
-  let items = load();
-  const modal = new bootstrap.Modal('#res-modal');
-  const $form = $('#res-form');
-  $('#res-date').attr('min', new Date().toISOString().slice(0, 10));
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  function render() {
-    if (!items.length) {
-      $body.html('<tr><td colspan="5" class="text-center">No reservations yet.</td></tr>');
-      return;
+            if (name.length < 2) {
+                alert("Please enter a valid full name (at least 2 characters).");
+                document.getElementById("booking-name").focus();
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                document.getElementById("booking-email").focus();
+                return;
+            }
+            if (!date) {
+                alert("Please select a reservation date.");
+                document.getElementById("booking-date").focus();
+                return;
+            }
+            if (!time) {
+                alert("Please choose a time slot.");
+                document.getElementById("booking-time").focus();
+                return;
+            }
+            if (!guests) {
+                alert("Please choose your party size.");
+                document.getElementById("booking-guests").focus();
+                return;
+            }
+
+            let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
+            reservations.push({
+                id: Date.now(),
+                name: name,
+                date: date,
+                time: time,
+                guests: guests + " guests"
+            });
+            localStorage.setItem("olive_reservations", JSON.stringify(reservations));
+
+            alert("Table reserved successfully!");
+            mainBookingForm.reset();
+            renderReservationsTable();
+        });
     }
-    $body.html(items.map(r => `
-      <tr data-id="${r.id}">
-        <td>${esc(r.name)}</td>
-        <td>${esc(r.date)}</td>
-        <td>${esc(r.time)}</td>
-        <td>${Number(r.guests)}</td>
-        <td class="text-end">
-          <button type="button" class="btn btn-sm btn-outline-secondary edit-btn">Edit</button>
-          <button type="button" class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
-        </td>
-      </tr>`).join(''));
-  }
 
-  $('#add-res-btn').on('click', function () {
-    $form[0].reset();
-    $form.removeClass('was-validated');
-    $('#res-id').val('');
-    $('#res-modal-title').text('Add reservation');
-    modal.show();
-  });
+    renderReservationsTable();
 
-  $body.on('click', '.edit-btn', function () {
-    const id = Number($(this).closest('tr').data('id'));
-    const r = items.find(x => x.id === id);
-    $form.removeClass('was-validated');
-    $('#res-id').val(r.id);
-    $('#res-name').val(r.name);
-    $('#res-date').val(r.date);
-    $('#res-time').val(r.time);
-    $('#res-guests').val(r.guests);
-    $('#res-modal-title').text('Edit reservation');
-    modal.show();
-  });
+    const resForm = document.getElementById("res-form");
+    if (resForm) {
+        resForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            
+            const idInput = document.getElementById("res-id").value;
+            const name = document.getElementById("res-name").value.trim();
+            const date = document.getElementById("res-date").value;
+            const time = document.getElementById("res-time").value;
+            const guests = document.getElementById("res-guests").value;
 
-  $form.on('submit', function (e) {
-    e.preventDefault();
-    if (!this.checkValidity()) { $form.addClass('was-validated'); return; }
-    const id = $('#res-id').val();
-    const data = {
-      name: $('#res-name').val().trim(),
-      date: $('#res-date').val(),
-      time: $('#res-time').val(),
-      guests: Number($('#res-guests').val())
-    };
-    if (id) {
-      Object.assign(items.find(x => x.id === Number(id)), data);
-    } else {
-      const nextId = items.reduce((m, x) => Math.max(m, x.id), 0) + 1;
-      items.push({ id: nextId, ...data });
+            if (!name || !date || !time || !guests) {
+                resForm.classList.add("was-validated");
+                return;
+            }
+
+            let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
+
+            if (idInput) {
+                let item = reservations.find(r => r.id == idInput);
+                if (item) {
+                    item.name = name;
+                    item.date = date;
+                    item.time = time;
+                    item.guests = guests + " guests";
+                }
+            } else {
+                reservations.push({
+                    id: Date.now(),
+                    name: name,
+                    date: date,
+                    time: time,
+                    guests: guests + " guests"
+                });
+            }
+
+            localStorage.setItem("olive_reservations", JSON.stringify(reservations));
+            renderReservationsTable();
+
+            const modalEl = document.getElementById("res-modal");
+            if (modalEl && window.bootstrap) {
+                const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInstance.hide();
+            }
+            resForm.reset();
+            document.getElementById("res-id").value = "";
+            resForm.classList.remove("was-validated");
+        });
     }
-    save(); render(); modal.hide();
-  });
+});
 
-  $body.on('click', '.delete-btn', function () {
-    const $row = $(this).closest('tr');
-    const id = Number($row.data('id'));
-    const r = items.find(x => x.id === id);
-    if (!confirm('Delete the reservation for "' + r.name + '"?')) return;
-    $row.fadeOut(200, function () {
-      items = items.filter(x => x.id !== id);
-      save(); render();
+function renderReservationsTable() {
+    const tableBody = document.getElementById("res-body");
+    if (!tableBody) return;
+
+    let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [
+        { id: 1, name: "Aigerim Kasymova", date: "2026-06-10", time: "18:00", guests: "2 guests" },
+        { id: 2, name: "Timur Bekmambetov", date: "2026-06-12", time: "20:00", guests: "4 guests" }
+    ];
+    
+    if (!localStorage.getItem("olive_reservations")) {
+        localStorage.setItem("olive_reservations", JSON.stringify(reservations));
+    }
+
+    tableBody.innerHTML = "";
+    if (reservations.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">No active reservations found.</td></tr>`;
+        return;
+    }
+
+    reservations.forEach((res) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${escapeHtml(res.name)}</td>
+            <td>${escapeHtml(res.date)}</td>
+            <td>${escapeHtml(res.time)}</td>
+            <td>${escapeHtml(res.guests)}</td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteReservation(${res.id})">Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(tr);
     });
-  });
+}
 
-  render();
+document.addEventListener("DOMContentLoaded", () => {
+    const deliveryForm = document.getElementById("delivery-form");
+
+    if (deliveryForm) {
+        const submitBtn = deliveryForm.querySelector("button[type='submit']");
+        if (submitBtn) {
+            submitBtn.removeAttribute("disabled");
+            submitBtn.textContent = "Place Order";
+        }
+
+        deliveryForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const nameInput = document.getElementById("delivery-name");
+            const phoneInput = document.getElementById("delivery-phone");
+            const addressInput = document.getElementById("delivery-address");
+            const phoneRegex = /^[+0-9() .\-]{7,25}$/;
+
+            const quantityInputs = deliveryForm.querySelectorAll(".quantity-input");
+            let totalItems = 0;
+            quantityInputs.forEach(input => {
+                totalItems += parseInt(input.value) || 0;
+            });
+
+            if (totalItems <= 0) {
+                alert("Please select at least one dish quantity before placing an order.");
+                return;
+            }
+
+            if (!nameInput || nameInput.value.trim().length < 2) {
+                alert("Please enter a valid full name (at least 2 characters).");
+                nameInput.focus();
+                return;
+            }
+
+            if (!phoneInput || !phoneRegex.test(phoneInput.value.trim())) {
+                alert("Please enter a valid phone number (7–25 characters using digits, spaces, +, parentheses, periods, or hyphens).");
+                phoneInput.focus();
+                return;
+            }
+
+            if (!addressInput || addressInput.value.trim().length < 5) {
+                alert("Please enter a valid delivery address (at least 5 characters).");
+                addressInput.focus();
+                return;
+            }
+
+            alert("Success! Your delivery order has been placed. Total items ordered: " + totalItems);
+            deliveryForm.reset();
+        });
+    }
+});
+
+function deleteReservation(id) {
+    if (confirm("Are you sure you want to cancel this reservation?")) {
+        let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
+        reservations = reservations.filter(r => r.id !== id);
+        localStorage.setItem("olive_reservations", JSON.stringify(reservations));
+        renderReservationsTable();
+    }
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
