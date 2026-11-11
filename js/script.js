@@ -2,7 +2,7 @@ $(function () {
   initRegistration();
   initMenuFilter();
   initGallery();
-  initReservationCrud(); 
+  initReservationCrud();
 });
 document.addEventListener("DOMContentLoaded", () => {
     const mainBookingForm = document.getElementById("booking-form");
