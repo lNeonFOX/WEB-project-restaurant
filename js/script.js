@@ -295,6 +295,10 @@ function initGallery(){
     if (e.key === 'ArrowLeft') show(current - 1);
     if (e.key === 'ArrowRight') show(current + 1);
   });
+  
+  $('#toggle-gallery-btn').on('click', function () {
+    $('#gallery').fadeToggle(400);
+  });
 }
 
 $(document).ready(function () {
