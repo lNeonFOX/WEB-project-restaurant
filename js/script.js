@@ -1,3 +1,9 @@
+$(function () {
+  initRegistration();
+  initMenuFilter();
+  initGallery();
+  initReservationCrud(); 
+});
 document.addEventListener("DOMContentLoaded", () => {
     function showFeedback(input, isValid, message = "") {
         input.classList.toggle("is-valid", isValid);
@@ -195,96 +201,81 @@ function deleteReservation(id) {
 
 
 
-// 2.1 Form Validation (register.html)
+//  Form Validation (register.html)
 
-function initRegisterValidation() {
+function initRegistration() {
   const $form = $('#register-form');
   if (!$form.length) return;
 
-  const $name = $('#reg-name');
-  const $email = $('#reg-email');
-  const $pass = $('#reg-password');
-  const $confirm = $('#reg-confirm');
-  const $bar = $('#strength-bar');
-  const $strengthText = $('#strength-text');
-  const $alert = $('#form-alert');
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-  function checkPasswordStrength(val) {
-    let score = 0;
-    if (val.length >= 6) score++;
-    if (/[0-9]/.test(val) && /[a-zA-Z]/.test(val)) score++;
-    if (/[^a-zA-Z0-9]/.test(val) && val.length >= 8) score++;
-
-    $bar.removeClass('bg-danger bg-warning bg-success');
-
-    if (val.length === 0){
-      $bar.css('width', '0%');
-      $strengthText.text('');
-    } else if (score === 1) {
-      $bar.css('width', '33%').addClass('bg-danger');
-      $strengthText.text('Weak password').css('color', '#dc3545');
-    } else if (score === 2) {
-      $bar.css('width', '66%').addClass('bg-warning');
-      $strengthText.text('Medium password').css('color', '#ffc107');
-    } else {
-      $bar.css('width', '100%').addClass('bg-success');
-      $strengthText.text('Strong password!').css('color', '#198754');
-    }
+  function strength(pw) {
+    if (!pw) return { width: 0, cls: '', text: '' };
+    const score = [
+      pw.length >= 8,
+      /[a-z]/.test(pw) && /[A-Z]/.test(pw),
+      /\d/.test(pw),
+      /[^A-Za-z0-9]/.test(pw)
+    ].filter(Boolean).length;
+    if (score <= 1) return { width: 33, cls: 'bg-danger', text: 'Weak' };
+    if (score <= 3) return { width: 66, cls: 'bg-warning', text: 'Medium' };
+    return { width: 100, cls: 'bg-success', text: 'Strong' };
   }
 
-  function setFieldState($field, isValid, msg = ''){
-    const $feedback = $field.siblings('.invalid-feedback');
-    if (isValid) {
-      $field.removeClass('is-invalid').addClass('is-valid');
-    } else {
-      $field.removeClass('is-valid').addClass('is-invalid');
-      if (msg) $feedback.text(msg);
-    }
+  function updateStrength(pw) {
+    const s = strength(pw);
+    $('#strength-bar')
+      .removeClass('bg-danger bg-warning bg-success')
+      .addClass(s.cls)
+      .css('width', s.width + '%');
+    $('#strength-text').text(s.text ? 'Password strength: ' + s.text : '');
   }
 
-  $name.on('input', function (){
-    setFieldState($(this), $(this).val().trim().length >= 2, 'Name must be at least 2 characters.');
-  });
+  const rules = {
+    'reg-name': v => v.trim().length >= 2 ? '' : 'Name is required (at least 2 characters).',
+    'reg-email': v => !v.trim() ? 'Email is required.'
+      : EMAIL_RE.test(v.trim()) ? '' : 'Enter a valid email, e.g. name@example.com.',
+    'reg-password': v => !v ? 'Password is required.'
+      : v.length < 8 ? 'Use at least 8 characters.'
+      : strength(v).text === 'Weak' ? 'Too weak. Add uppercase letters, numbers or symbols.' : '',
+    'reg-confirm': v => !v ? 'Please confirm your password.'
+      : v !== $('#reg-password').val() ? 'Passwords do not match.' : ''
+  };
 
-  $email.on('input', function (){
-    setFieldState($(this), emailRegex.test($(this).val().trim()), 'Enter a valid email address.');
-  });
+  function check($input) {
+    const msg = rules[$input.attr('id')]($input.val());
+    $input.toggleClass('is-invalid', !!msg).toggleClass('is-valid', !msg);
+    $input.siblings('.invalid-feedback').text(msg);
+    return !msg;
+  }
 
-  $pass.on('input', function (){
-    const val = $(this).val();
-    checkPasswordStrength(val);
-    setFieldState($(this), val.length >= 6, 'Password must be at least 6 characters.');
-    if ($confirm.val().length > 0) {
-      setFieldState($confirm, $confirm.val() === val, 'Passwords do not match.');
+
+  $form.on('input focusout', '.form-control', function () {
+    check($(this));
+    if (this.id === 'reg-password') {
+      updateStrength($(this).val());
+      if ($('#reg-confirm').val()) check($('#reg-confirm'));
     }
   });
 
-  $confirm.on('input', function (){
-    setFieldState($(this), $(this).val().length >= 6 && $(this).val() === $pass.val(), 'Passwords do not match.');
-  });
-
-  $form.on('submit', function (e){
+  $form.on('submit', function (e) {
     e.preventDefault();
-    const isNameOk = $name.val().trim().length >= 2;
-    const isEmailOk = emailRegex.test($email.val().trim());
-    const isPassOk = $pass.val().length >= 6;
-    const isConfirmOk = $confirm.val().length >= 6 && $confirm.val() === $pass.val();
-
-    setFieldState($name, isNameOk, 'Name must be at least 2 characters.');
-    setFieldState($email, isEmailOk, 'Enter a valid email address.');
-    setFieldState($pass, isPassOk, 'Password must be at least 6 characters.');
-    setFieldState($confirm, isConfirmOk, 'Passwords do not match.');
-
-    if (isNameOk && isEmailOk && isPassOk && isConfirmOk) {
-      $alert.removeClass('d-none alert-danger').addClass('alert-success').text('Registration successful!');
-      $form[0].reset();
-      $form.find('.is-valid').removeClass('is-valid');
-      $bar.css('width', '0%');
-      $strengthText.text('');
-    } else {
-      $alert.removeClass('d-none alert-success').addClass('alert-danger').text('Please correct errors before submitting.');
+    let ok = true, $first = null;
+    $form.find('.form-control').each(function () {
+      if (!check($(this))) { ok = false; $first = $first || $(this); }
+    });
+    const $alert = $('#form-alert');
+    if (!ok) {
+      $alert.removeClass('d-none alert-success').addClass('alert-danger')
+        .text('Please fix the highlighted fields.');
+      $first.trigger('focus');
+      return;
     }
+    $alert.removeClass('d-none alert-danger').addClass('alert-success')
+      .text('Registration successful.');
+    $form[0].reset();
+    $form.find('.form-control').removeClass('is-valid is-invalid');
+    updateStrength('');
   });
 }
 
