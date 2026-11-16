@@ -2,7 +2,7 @@ $(function () {
   initRegistration();
   initMenuFilter();
   initGallery();
-  initReservationCrud(); 
+  initFaq();
 });
 document.addEventListener("DOMContentLoaded", () => {
     function showFeedback(input, isValid, message = "") {
@@ -392,9 +392,24 @@ function initGallery(){
   });
 }
 
-$(document).ready(function () {
-  initReservationCrud();
-  initRegisterValidation();
-  initMenuFilter();
-  initGallery();
-});
+function initFaq() {
+  $(document).on('click', '.faq-question', function () {
+    const $btn = $(this);
+    const $item = $btn.closest('.faq-item');
+    const $answer = $btn.next('.faq-answer');
+    const $icon = $btn.find('.faq-icon');
+    const isOpening = !$item.hasClass('open');
+
+    $('.faq-item.open').not($item).each(function () {
+      $(this).removeClass('open');
+      $(this).find('.faq-question').attr('aria-expanded', 'false');
+      $(this).find('.faq-icon').text('+');
+      $(this).find('.faq-answer').stop(true, true).slideUp(250);
+    });
+
+    $item.toggleClass('open', isOpening);
+    $btn.attr('aria-expanded', String(isOpening));
+    $icon.text(isOpening ? '−' : '+');
+    $answer.stop(true, true).slideToggle(250);
+  });
+}
