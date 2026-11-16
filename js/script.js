@@ -1,4 +1,5 @@
 $(function () {
+  initThemeToggle();
   initRegistration();
   initMenuFilter();
   initGallery();
@@ -411,5 +412,37 @@ function initFaq() {
     $btn.attr('aria-expanded', String(isOpening));
     $icon.text(isOpening ? '−' : '+');
     $answer.stop(true, true).slideToggle(250);
+  });
+}
+
+
+/*Dark / Light Theme Switcher with LocalStorage*/
+
+function initThemeToggle(){
+  const THEME_KEY = 'oe_theme_preference';
+  const $toggleBtn = $('#theme-toggle');
+  const $icon = $toggleBtn.find('.theme-icon');
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedTheme === 'dark') {
+    $('body').addClass('dark-theme');
+    $icon.text('☀️');
+    $toggleBtn.attr('aria-label', 'Switch to Light Theme');
+  } else {
+    $icon.text('🌙');
+    $toggleBtn.attr('aria-label', 'Switch to Dark Theme');
+  }
+
+  $toggleBtn.on('click', function (){
+    const isDark = $('body').toggleClass('dark-theme').hasClass('dark-theme');
+
+    if (isDark) {
+      $icon.text('☀️');
+      localStorage.setItem(THEME_KEY, 'dark');
+      $toggleBtn.attr('aria-label', 'Switch to Light Theme');
+    } else {
+      $icon.text('🌙');
+      localStorage.setItem(THEME_KEY, 'light');
+      $toggleBtn.attr('aria-label', 'Switch to Dark Theme');
+    }
   });
 }
