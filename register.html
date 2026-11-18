@@ -79,14 +79,20 @@
                                 <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" for="reg-password">Password</label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label" for="reg-password">Password</label>
+                                    <button type="button" class="toggle-password" data-target="reg-password" aria-controls="reg-password" aria-pressed="false">Show</button>
+                                </div>
                                 <input class="form-control" id="reg-password" type="password" autocomplete="new-password">
                                 <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
                                 <div class="progress mt-2" style="height:8px"><div id="strength-bar" class="progress-bar" style="width:0"></div></div>
                                 <small id="strength-text"></small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" for="reg-confirm">Confirm password</label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label" for="reg-confirm">Confirm password</label>
+                                    <button type="button" class="toggle-password" data-target="reg-confirm" aria-controls="reg-confirm" aria-pressed="false">Show</button>
+                                </div>
                                 <input class="form-control" id="reg-confirm" type="password" autocomplete="new-password">
                                 <div class="invalid-feedback"></div><div class="valid-feedback">Passwords match.</div>
                             </div>
@@ -104,7 +110,10 @@
                                 <div class="invalid-feedback"></div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" for="si-password">Password</label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label" for="si-password">Password</label>
+                                    <button type="button" class="toggle-password" data-target="si-password" aria-controls="si-password" aria-pressed="false">Show</button>
+                                </div>
                                 <input class="form-control" id="si-password" type="password" autocomplete="current-password">
                                 <div class="invalid-feedback"></div>
                             </div>

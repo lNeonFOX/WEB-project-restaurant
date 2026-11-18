@@ -1,5 +1,6 @@
 $(function () {
   initAuth();
+  initPasswordToggle();
   initRegistration();
   initMenuFilter();
   initGallery();
@@ -590,4 +591,21 @@ function initAuth() {
   });
 
   if (window.location.hash === '#signin') showSignInTab('', '');
+}
+
+function initPasswordToggle() {
+  $(document).on('click', '.toggle-password', function () {
+    const $btn = $(this);
+    const $input = $('#' + $btn.data('target'));
+    const show = $input.attr('type') === 'password';
+    $input.attr('type', show ? 'text' : 'password');
+    $btn.text(show ? 'Hide' : 'Show').attr('aria-pressed', String(show));
+  });
+
+  $(document).on('reset', 'form', function () {
+    $(this).find('.toggle-password').each(function () {
+      $('#' + $(this).data('target')).attr('type', 'password');
+      $(this).text('Show').attr('aria-pressed', 'false');
+    });
+  });
 }
