@@ -950,3 +950,38 @@ font-size: 0.85rem;
     .lb-prev {left: 8px;}
     .lb-next {right: 8px;}
 }
+
+/*reg style */
+.auth-tabs .nav-link {
+    color: var(--color-muted);
+    font-weight: 600;
+}
+
+.auth-tabs .nav-link.active {
+    color: var(--color-accent);
+    background: var(--color-white);
+    border-color: var(--color-line) var(--color-line) var(--color-white);
+}
+
+.nav-signout {
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--color-ink);
+    background: transparent;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 4px 14px;
+    cursor: pointer;
+}
+
+.nav-signout:hover,
+.nav-signout:focus-visible {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+@media (max-width: 575px) {
+    .nav-signout {
+        font-size: 0.85rem;
+    }
+}

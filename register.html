@@ -49,37 +49,84 @@
             </p>
         </section>
 
-        <section class="container section-space pt-0">
-  <div class="row justify-content-center"><div class="col-12 col-lg-6">
-    <form id="register-form" class="form-panel" novalidate>
-      <h2>Create account</h2>
-      <div id="form-alert" class="alert d-none" role="alert"></div>
-      <div class="mb-3">
-        <label class="form-label" for="reg-name">Full name</label>
-        <input class="form-control" id="reg-name" type="text" autocomplete="name">
-        <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label" for="reg-email">Email</label>
-        <input class="form-control" id="reg-email" type="email" autocomplete="email">
-        <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label" for="reg-password">Password</label>
-        <input class="form-control" id="reg-password" type="password" autocomplete="new-password">
-        <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
-        <div class="progress mt-2" style="height:8px"><div id="strength-bar" class="progress-bar" style="width:0"></div></div>
-        <small id="strength-text"></small>
-      </div>
-      <div class="mb-3">
-        <label class="form-label" for="reg-confirm">Confirm password</label>
-        <input class="form-control" id="reg-confirm" type="password" autocomplete="new-password">
-        <div class="invalid-feedback"></div><div class="valid-feedback">Passwords match.</div>
-      </div>
-      <button class="btn btn-brand" type="submit">Register</button>
-            </form>
-        </div></div>
-        </section>
+<section class="container section-space pt-0">
+    <div class="row justify-content-center"><div class="col-12 col-lg-6">
+        <div class="form-panel">
+            <div id="auth-guest">
+                <ul class="nav nav-tabs auth-tabs mb-4" id="auth-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-register-btn" data-bs-toggle="tab" data-bs-target="#tab-register" type="button" role="tab" aria-controls="tab-register" aria-selected="true">Register</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-signin-btn" data-bs-toggle="tab" data-bs-target="#tab-signin" type="button" role="tab" aria-controls="tab-signin" aria-selected="false">Sign in</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-register" role="tabpanel" aria-labelledby="tab-register-btn">
+                        <form id="register-form" novalidate>
+                            <h2>Create account</h2>
+                            <div id="form-alert" class="alert d-none" role="alert"></div>
+                            <div class="mb-3">
+                                <label class="form-label" for="reg-name">Full name</label>
+                                <input class="form-control" id="reg-name" type="text" autocomplete="name">
+                                <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="reg-email">Email</label>
+                                <input class="form-control" id="reg-email" type="email" autocomplete="email">
+                                <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="reg-password">Password</label>
+                                <input class="form-control" id="reg-password" type="password" autocomplete="new-password">
+                                <div class="invalid-feedback"></div><div class="valid-feedback">Looks good.</div>
+                                <div class="progress mt-2" style="height:8px"><div id="strength-bar" class="progress-bar" style="width:0"></div></div>
+                                <small id="strength-text"></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="reg-confirm">Confirm password</label>
+                                <input class="form-control" id="reg-confirm" type="password" autocomplete="new-password">
+                                <div class="invalid-feedback"></div><div class="valid-feedback">Passwords match.</div>
+                            </div>
+                            <button class="btn btn-brand" type="submit">Register</button>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-signin" role="tabpanel" aria-labelledby="tab-signin-btn">
+                        <form id="signin-form" novalidate>
+                            <h2>Sign in</h2>
+                            <div id="signin-alert" class="alert d-none" role="alert"></div>
+                            <div class="mb-3">
+                                <label class="form-label" for="si-email">Email</label>
+                                <input class="form-control" id="si-email" type="email" autocomplete="email">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="si-password">Password</label>
+                                <input class="form-control" id="si-password" type="password" autocomplete="current-password">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <button class="btn btn-brand" type="submit">Sign in</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="auth-user" class="d-none" aria-live="polite">
+                <p class="eyebrow">SIGNED IN</p>
+                <h2>Welcome, <span id="auth-user-name"></span></h2>
+                <p class="mb-1">Email: <strong id="auth-user-email"></strong></p>
+                <p class="small text-muted">Signed in since <span id="auth-user-since"></span></p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a class="btn btn-brand" href="booking.html">Book a table</a>
+                    <button type="button" class="btn btn-outline-secondary" id="signout-btn">Sign out</button>
+                </div>
+            </div>
+
+        </div>
+    </div></div>
+</section>
     </main>
 
     <footer class="site-footer">
