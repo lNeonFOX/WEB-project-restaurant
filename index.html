@@ -221,7 +221,40 @@
                 </div>
             </div>
         </section>
+        <section class="container section-space" id="recipe-explorer" aria-labelledby="recipes-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">COOK AT HOME</p>
+                    <h2 id="recipes-title">Recipe explorer</h2>
+                    <p>Search real recipes from TheMealDB and cook our favourite dishes at home.</p>
+                </div>
+            </div>
+
+            <form id="recipe-form" class="recipe-controls" novalidate>
+                <input class="form-control" id="recipe-search" type="search" placeholder="Search recipes, e.g. pasta" aria-label="Search recipes">
+                <select class="form-select" id="recipe-category" aria-label="Filter by category">
+                    <option value="">Popular picks</option>
+                </select>
+                <button type="button" class="btn btn-brand" id="recipe-random">Random dish</button>
+                <button type="button" class="btn btn-outline-secondary" id="recipe-reload">Reload</button>
+            </form>
+
+            <div id="recipe-status" aria-live="polite"></div>
+            <div id="recipe-grid" class="recipe-grid"></div>
+        </section>
     </main>
+
+        <div class="modal fade" id="recipe-modal" tabindex="-1" aria-labelledby="recipe-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-4" id="recipe-modal-title"></h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="recipe-modal-body"></div>
+            </div>
+        </div>
+    </div>
 
     <footer class="site-footer">
         <div class="container footer-grid">

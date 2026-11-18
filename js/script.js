@@ -6,8 +6,9 @@ $(function () {
   initMenuFilter();
   initGallery();
   initFaq();
-  if (typeof initRecipeExplorer === 'function') initRecipeExplorer();
+  initRecipeExplorer();
 });
+
 document.addEventListener("DOMContentLoaded", () => {
     function showFeedback(input, isValid, message = "") {
         input.classList.toggle("is-valid", isValid);
@@ -631,4 +632,170 @@ function initThemeToggle(){
       $toggleBtn.attr('aria-label', 'Switch to Dark Theme');
     }
   });
+}
+
+//API
+const MEALDB_URL = 'https://www.themealdb.com/api/json/v1/1/';
+
+async function fetchJSON(endpoint, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(MEALDB_URL + endpoint, { signal: controller.signal });
+    if (!response.ok) throw new Error('Server responded with status ' + response.status + '.');
+    return await response.json();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('The request timed out.');
+    if (err instanceof SyntaxError) throw new Error('The server returned invalid data.');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function initRecipeExplorer() {
+  const $grid = $('#recipe-grid');
+  if (!$grid.length) return;
+
+  const $status = $('#recipe-status');
+  const $search = $('#recipe-search');
+  const $category = $('#recipe-category');
+  const MAX_CARDS = 12;
+  const SPINNER = '<div class="d-flex align-items-center gap-2"><div class="spinner-border spinner-border-sm" role="status"></div><span>Loading...</span></div>';
+
+  let requestId = 0;
+  let lastLoader = null;
+  let typingTimer = null;
+
+  function currentLoader() {
+    const query = $search.val().trim();
+    const category = $category.val();
+
+    if (query) {
+      return async () => {
+        const data = await fetchJSON('search.php?s=' + encodeURIComponent(query));
+        const meals = (data && data.meals) || [];
+        return category ? meals.filter(m => m.strCategory === category) : meals;
+      };
+    }
+    return async () => {
+      const data = await fetchJSON('filter.php?c=' + encodeURIComponent(category || 'Pasta'));
+      return (data && data.meals) || [];
+    };
+  }
+
+  function showError(message) {
+    $grid.empty();
+    $status.html(
+      '<div class="alert alert-danger d-flex justify-content-between align-items-center gap-3" role="alert">' +
+      '<span>' + escapeHtml(message) + '</span>' +
+      '<button type="button" class="btn btn-sm btn-outline-danger" id="recipe-retry">Try again</button></div>'
+    );
+  }
+
+  function renderMeals(meals) {
+    if (!meals.length) {
+      $grid.empty();
+      $status.html('<p class="mb-0">No recipes found. Try another search or category.</p>');
+      return;
+    }
+    const shown = meals.slice(0, MAX_CARDS);
+    $status.html('<p class="small text-muted mb-0">Showing ' + shown.length + ' of ' + meals.length + ' recipes</p>');
+    $grid.html(shown.map(m => `
+      <article class="recipe-card">
+        <button type="button" class="recipe-card-btn" data-id="${escapeHtml(m.idMeal)}" aria-label="View recipe: ${escapeHtml(m.strMeal)}">
+          <img src="${escapeHtml(m.strMealThumb)}" alt="${escapeHtml(m.strMeal)}" loading="lazy">
+          <span class="recipe-card-body">
+            ${m.strArea ? '<span class="eyebrow">' + escapeHtml(m.strArea) + '</span>' : ''}
+            <h3>${escapeHtml(m.strMeal)}</h3>
+          </span>
+        </button>
+      </article>`).join(''));
+  }
+
+  async function loadList(loader) {
+    lastLoader = loader;
+    const id = ++requestId;
+    $grid.empty();
+    $status.html(SPINNER);
+    try {
+      const meals = await loader();
+      if (id !== requestId) return;
+      renderMeals(meals);
+    } catch (err) {
+      if (id !== requestId) return;
+      showError('Could not load recipes. ' + err.message);
+    }
+  }
+
+  function renderRecipe(meal) {
+    const ingredients = [];
+    for (let i = 1; i <= 20; i++) {
+      const name = (meal['strIngredient' + i] || '').trim();
+      if (name) ingredients.push('<li>' + escapeHtml(((meal['strMeasure' + i] || '').trim() + ' ' + name).trim()) + '</li>');
+    }
+    const steps = (meal.strInstructions || '').split(/\r?\n/).filter(l => l.trim())
+      .map(l => '<p>' + escapeHtml(l) + '</p>').join('');
+    const video = /^https?:\/\//.test(meal.strYoutube || '')
+      ? '<a class="btn btn-brand btn-sm mt-2" href="' + escapeHtml(meal.strYoutube) + '" target="_blank" rel="noopener">Watch video</a>' : '';
+
+    $('#recipe-modal-title').text(meal.strMeal);
+    $('#recipe-modal-body').html(`
+      <img class="recipe-modal-img mb-3" src="${escapeHtml(meal.strMealThumb)}" alt="${escapeHtml(meal.strMeal)}">
+      <p class="eyebrow">${escapeHtml([meal.strCategory, meal.strArea].filter(Boolean).join(' · '))}</p>
+      <h3 class="h5">Ingredients</h3>
+      <ul class="recipe-ingredients">${ingredients.join('')}</ul>
+      <h3 class="h5">Instructions</h3>
+      ${steps}
+      ${video}`);
+  }
+
+  async function openRecipe(loader) {
+    $('#recipe-modal-title').text('Loading...');
+    $('#recipe-modal-body').html(SPINNER);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('recipe-modal')).show();
+    try {
+      const meal = await loader();
+      if (!meal) throw new Error('Recipe not found.');
+      renderRecipe(meal);
+    } catch (err) {
+      $('#recipe-modal-title').text('Something went wrong');
+      $('#recipe-modal-body').html('<div class="alert alert-danger mb-0" role="alert">' +
+        escapeHtml('Could not load the recipe. ' + err.message) + '</div>');
+    }
+  }
+
+  async function loadCategories() {
+    try {
+      const data = await fetchJSON('categories.php');
+      ((data && data.categories) || []).forEach(c => {
+        $('<option>').val(c.strCategory).text(c.strCategory).appendTo($category);
+      });
+    } catch (err) {
+      console.warn('Categories unavailable:', err.message);
+    }
+  }
+
+  $search.on('input', function () {
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => loadList(currentLoader()), 400);
+  });
+  $category.on('change', () => loadList(currentLoader()));
+  $('#recipe-form').on('submit', e => e.preventDefault());
+  $('#recipe-reload').on('click', () => loadList(lastLoader || currentLoader()));
+  $('#recipe-random').on('click', () => openRecipe(async () => {
+    const data = await fetchJSON('random.php');
+    return ((data && data.meals) || [])[0];
+  }));
+  $grid.on('click', '.recipe-card-btn', function () {
+    const id = $(this).data('id');
+    openRecipe(async () => {
+      const data = await fetchJSON('lookup.php?i=' + encodeURIComponent(id));
+      return ((data && data.meals) || [])[0];
+    });
+  });
+  $status.on('click', '#recipe-retry', () => loadList(lastLoader || currentLoader()));
+
+  loadCategories();
+  loadList(currentLoader());
 }
