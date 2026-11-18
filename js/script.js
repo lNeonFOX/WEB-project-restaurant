@@ -1,9 +1,12 @@
 $(function () {
   initThemeToggle();
+  initAuth();
+  initPasswordToggle();
   initRegistration();
   initMenuFilter();
   initGallery();
   initFaq();
+  if (typeof initRecipeExplorer === 'function') initRecipeExplorer();
 });
 document.addEventListener("DOMContentLoaded", () => {
     function showFeedback(input, isValid, message = "") {
@@ -190,19 +193,10 @@ function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m]));
 }
 
-function deleteReservation(id) {
-    if (confirm("Are you sure you want to cancel this reservation?")) {
-        let reservations = JSON.parse(localStorage.getItem("olive_reservations")) || [];
-        reservations = reservations.filter(r => r.id !== id);
-        localStorage.setItem("olive_reservations", JSON.stringify(reservations));
-        renderReservationsTable();
-    }
-}
 
 
 
-
-//  Form Validation (register.html)
+//Form Validation (register.html)
 
 function initRegistration() {
   const $form = $('#register-form');
@@ -259,7 +253,7 @@ function initRegistration() {
     }
   });
 
-  $form.on('submit', function (e) {
+  $form.on('submit', async function (e) {
     e.preventDefault();
     let ok = true, $first = null;
     $form.find('.form-control').each(function () {
@@ -272,11 +266,22 @@ function initRegistration() {
       $first.trigger('focus');
       return;
     }
-    $alert.removeClass('d-none alert-danger').addClass('alert-success')
-      .text('Registration successful.');
+
+    const result = await registerUser($('#reg-name').val(), $('#reg-email').val(), $('#reg-password').val());
+    if (!result.ok) {
+      $alert.removeClass('d-none alert-success').addClass('alert-danger').text(result.error);
+      $('#reg-email').removeClass('is-valid').addClass('is-invalid')
+        .siblings('.invalid-feedback').text(result.error);
+      $('#reg-email').trigger('focus');
+      return;
+    }
+
+    const email = $('#reg-email').val().trim();
+    $alert.addClass('d-none').removeClass('alert-success alert-danger').text('');
     $form[0].reset();
     $form.find('.form-control').removeClass('is-valid is-invalid');
     updateStrength('');
+    showSignInTab(email, 'Account created. Please sign in.');
   });
 }
 
@@ -415,6 +420,187 @@ function initFaq() {
   });
 }
 
+const AUTH_USERS_KEY = 'olive_users';
+const AUTH_SESSION_KEY = 'olive_session';
+const AUTH_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function readStorage(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key));
+    return value === null || value === undefined ? fallback : value;
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function writeStorage(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function hashPassword(email, password) {
+  const text = email.toLowerCase() + ':' + password;
+  if (window.crypto && window.crypto.subtle) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  let h = 5381;
+  for (const ch of text) h = ((h << 5) + h + ch.charCodeAt(0)) | 0;
+  return 'f' + (h >>> 0).toString(16);
+}
+
+async function registerUser(name, email, password) {
+  email = email.trim().toLowerCase();
+  const users = readStorage(AUTH_USERS_KEY, []);
+  if (users.some(u => u.email === email)) {
+    return { ok: false, error: 'An account with this email already exists. Please sign in.' };
+  }
+  users.push({ name: name.trim(), email: email, passwordHash: await hashPassword(email, password) });
+  if (!writeStorage(AUTH_USERS_KEY, users)) {
+    return { ok: false, error: 'Could not save the account. Check that browser storage is enabled.' };
+  }
+  return { ok: true };
+}
+
+async function signIn(email, password) {
+  email = email.trim().toLowerCase();
+  const user = readStorage(AUTH_USERS_KEY, []).find(u => u.email === email);
+
+  if (!user || user.passwordHash !== await hashPassword(email, password)) {
+    return { ok: false, error: 'Invalid email or password.' };
+  }
+  const session = { name: user.name, email: user.email, signedInAt: new Date().toISOString() };
+  if (!writeStorage(AUTH_SESSION_KEY, session)) {
+    return { ok: false, error: 'Could not save the login state. Check that browser storage is enabled.' };
+  }
+  return { ok: true };
+}
+
+function getSession() {
+  const s = readStorage(AUTH_SESSION_KEY, null);
+  return s && typeof s.email === 'string' && typeof s.name === 'string' ? s : null;
+}
+
+function signOut() {
+  try { localStorage.removeItem(AUTH_SESSION_KEY); } catch (err) {  }
+}
+
+function showSignInTab(email, message) {
+  const tabBtn = document.getElementById('tab-signin-btn');
+  if (!tabBtn) return;
+  if (window.bootstrap) bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+  if (email) $('#si-email').val(email);
+  const $alert = $('#signin-alert');
+  if (message) $alert.removeClass('d-none alert-danger').addClass('alert-success').text(message);
+  else $alert.addClass('d-none').text('');
+}
+
+function renderAuthUI() {
+  const session = getSession();
+
+  const $link = $('.site-nav a[href="register.html"]');
+  $('#nav-signout').remove();
+  if (session) {
+    $link.text('Hi, ' + session.name.split(' ')[0]);
+    $('<button type="button" id="nav-signout" class="nav-signout">Sign out</button>').insertAfter($link);
+  } else {
+    $link.text('Register');
+  }
+
+  if ($('#auth-guest').length) {
+    $('#auth-guest').toggleClass('d-none', !!session);
+    $('#auth-user').toggleClass('d-none', !session);
+    if (session) {
+      $('#auth-user-name').text(session.name);
+      $('#auth-user-email').text(session.email);
+      $('#auth-user-since').text(new Date(session.signedInAt).toLocaleString());
+    }
+  }
+}
+
+function initAuth() {
+  renderAuthUI();
+
+  $(document).on('click', '#nav-signout, #signout-btn', function () {
+    signOut();
+    renderAuthUI();
+    showSignInTab('', '');
+    $('#signin-alert').removeClass('d-none alert-danger').addClass('alert-success').text('You have been signed out.');
+  });
+
+  $(window).on('storage', function (e) {
+    if (e.key === AUTH_SESSION_KEY || e.key === null) renderAuthUI();
+  });
+
+  const $form = $('#signin-form');
+  if (!$form.length) return;
+
+  const rules = {
+    'si-email': v => !v.trim() ? 'Email is required.'
+      : AUTH_EMAIL_RE.test(v.trim()) ? '' : 'Enter a valid email, e.g. name@example.com.',
+    'si-password': v => !v ? 'Password is required.'
+      : v.length < 8 ? 'Password must be at least 8 characters.' : ''
+  };
+
+  function check($input) {
+    const msg = rules[$input.attr('id')]($input.val());
+    $input.toggleClass('is-invalid', !!msg).toggleClass('is-valid', !msg);
+    $input.siblings('.invalid-feedback').text(msg);
+    return !msg;
+  }
+
+  $form.on('input focusout', '.form-control', function () { check($(this)); });
+
+  $form.on('submit', async function (e) {
+    e.preventDefault();
+    let ok = true, $first = null;
+    $form.find('.form-control').each(function () {
+      if (!check($(this))) { ok = false; $first = $first || $(this); }
+    });
+    const $alert = $('#signin-alert');
+    if (!ok) {
+      $alert.removeClass('d-none alert-success').addClass('alert-danger')
+        .text('Please fix the highlighted fields.');
+      $first.trigger('focus');
+      return;
+    }
+
+    const result = await signIn($('#si-email').val(), $('#si-password').val());
+    if (!result.ok) {
+      $alert.removeClass('d-none alert-success').addClass('alert-danger').text(result.error);
+      $('#si-password').val('').removeClass('is-valid is-invalid').trigger('focus');
+      return;
+    }
+
+    $form[0].reset();
+    $form.find('.form-control').removeClass('is-valid is-invalid');
+    $alert.addClass('d-none').text('');
+    renderAuthUI();
+  });
+
+  if (window.location.hash === '#signin') showSignInTab('', '');
+}
+
+function initPasswordToggle() {
+  $(document).on('click', '.toggle-password', function () {
+    const $btn = $(this);
+    const $input = $('#' + $btn.data('target'));
+    const show = $input.attr('type') === 'password';
+    $input.attr('type', show ? 'text' : 'password');
+    $btn.text(show ? 'Hide' : 'Show').attr('aria-pressed', String(show));
+  });
+
+  $(document).on('reset', 'form', function () {
+    $(this).find('.toggle-password').each(function () {
+      $('#' + $(this).data('target')).attr('type', 'password');
+      $(this).text('Show').attr('aria-pressed', 'false');
+    });
+  });
+}
 
 /*Dark / Light Theme Switcher with LocalStorage*/
 
